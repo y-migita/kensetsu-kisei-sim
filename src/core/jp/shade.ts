@@ -64,6 +64,11 @@ function distToRect(
   return Math.hypot(dx, dz);
 }
 
+/** 点からみなし敷地境界までの距離 (等時間図の 5m/10m ライン描画にも使用) */
+export function distanceToDeemedBoundary(site: Site, x: number, z: number): number {
+  return distToRect(x, z, deemedBoundary(site));
+}
+
 /** Andrew の単調鎖による凸包 (点数 ≤ 8 程度を想定) */
 function convexHull(points: [number, number][]): [number, number][] {
   const pts = [...points].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
