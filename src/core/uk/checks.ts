@@ -141,8 +141,13 @@ export function extensionDepth(b: Building, p: UkParams): number {
   return Math.max(0, b.depth - p.originalDepth);
 }
 
-/** Class A の標準奥行限度と拡大限度 (prior approval) [m] */
-export function pdDepthLimits(p: UkParams): { standard: number; enlarged: number | null } {
+/**
+ * Class A の標準奥行限度と拡大限度 (prior approval) [m]。
+ * 単層: 戸建 4m (拡大 8m) / その他 3m (拡大 6m) — A.1(f)
+ * 2 層以上: 一律 3m・拡大なし — A.1(h)(i)
+ */
+export function pdDepthLimits(p: UkParams, floors = 1): { standard: number; enlarged: number | null } {
+  if (floors >= 2) return { standard: 3, enlarged: null };
   const standard = p.houseType === 'detached' ? 4 : 3;
   const enlarged = p.isDesignatedLand ? null : p.houseType === 'detached' ? 8 : 6;
   return { standard, enlarged };
@@ -150,7 +155,7 @@ export function pdDepthLimits(p: UkParams): { standard: number; enlarged: number
 
 export function checkPdDepth(_site: Site, b: Building, p: UkParams): CheckResult {
   const ext = extensionDepth(b, p);
-  const { standard, enlarged } = pdDepthLimits(p);
+  const { standard, enlarged } = pdDepthLimits(p, b.floors);
   const base = {
     id: 'uk-pd-depth',
     name: 'PD: 後方増築の奥行',
@@ -172,7 +177,10 @@ export function checkPdDepth(_site: Site, b: Building, p: UkParams): CheckResult
       status: 'pass',
       actual: `${fmt(ext, 2)}m`,
       limit: `${standard}m`,
-      detail: `${p.houseType === 'detached' ? '戸建' : '非戸建'}の単層後方増築は ${standard}m まで許可不要`,
+      detail:
+        b.floors >= 2
+          ? '2 層以上の後方増築は一律 3m まで許可不要 (A.1(h))'
+          : `${p.houseType === 'detached' ? '戸建' : '非戸建'}の単層後方増築は ${standard}m まで許可不要`,
       margin: margin(ext, standard),
     };
   }

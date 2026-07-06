@@ -93,6 +93,13 @@ describe('PD Class A: 増築奥行', () => {
     expect(pdDepthLimits({ ...params, isDesignatedLand: true }).enlarged).toBeNull();
   });
 
+  it('2 層以上の増築は住宅形式に関わらず 3m・拡大なし (A.1(h))', () => {
+    expect(pdDepthLimits({ ...params, houseType: 'detached' }, 2)).toEqual({
+      standard: 3,
+      enlarged: null,
+    });
+  });
+
   it('増築部分 = 建物奥行 - オリジナル奥行', () => {
     expect(extensionDepth(building, params)).toBe(2);
     expect(extensionDepth({ ...building, depth: 9 }, params)).toBe(0);
