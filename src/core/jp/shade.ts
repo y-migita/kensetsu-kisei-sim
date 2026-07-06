@@ -137,6 +137,8 @@ export interface ShadeSimOptions {
   resolution?: number;
   /** 境界から確保する検定範囲 [m] (10m ラインの外側) */
   extent?: number;
+  /** 検定時間帯 [真太陽時]。既定 8〜16時、北海道は 9〜15時 (56条の2第1項) */
+  timeRange?: [number, number];
 }
 
 /**
@@ -174,9 +176,8 @@ export function simulateShade(
     }
   }
 
-  // 真太陽時 8:00〜16:00 を積分
-  const tStart = 8;
-  const tEnd = 16;
+  // 真太陽時 8:00〜16:00 (北海道 9:00〜15:00) を積分
+  const [tStart, tEnd] = options.timeRange ?? [8, 16];
   const stepH = timeStep / 60;
   const nSteps = Math.round((tEnd - tStart) / stepH);
   for (let s = 0; s < nSteps; s++) {

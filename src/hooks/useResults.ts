@@ -19,14 +19,16 @@ export function useResults() {
   const dBuilding = useDeferredValue(building);
   const dMeasureHeight = useDeferredValue(jp.shadeMeasureHeight);
   const shadeNeeded = needsShadeSim(dSite, dBuilding, jp);
+  const hokkaido = jp.hokkaido;
 
   const shadeSim = useMemo<ShadeSimResult | null>(() => {
     if (!shadeNeeded) return null;
     return simulateShade(dSite, dBuilding, dMeasureHeight, dSite.latitude, {
       resolution: 0.5,
       timeStepMinutes: 6,
+      timeRange: hokkaido ? [9, 15] : [8, 16],
     });
-  }, [dSite, dBuilding, dMeasureHeight, shadeNeeded]);
+  }, [dSite, dBuilding, dMeasureHeight, shadeNeeded, hokkaido]);
 
   const jpResults = useMemo(
     () => runJpChecks(site, building, jp, shadeSim),

@@ -49,6 +49,7 @@ const baseParams: JpParams = {
   shadeDesignated: true,
   shadeRuleIndex: 0,
   shadeMeasureHeight: 4,
+  hokkaido: false,
 };
 
 describe('deriveGeometry', () => {
@@ -288,6 +289,24 @@ describe('北側斜線 (56条1項3号)', () => {
   it('住居地域・商業地域は対象外', () => {
     expect(checkNorthSlant(site, building, baseParams).status).toBe('na');
     expect(checkNorthSlant(site, building, { ...baseParams, zone: 'commercial' }).status).toBe('na');
+  });
+});
+
+describe('日影規制の許容時間 (別表第4)', () => {
+  it('低層系: (一) 3h/2h、北海道は 2h/1.5h', async () => {
+    const { shadeRuleOptions, JP_ZONES: zones } = await import('./zoning');
+    expect(shadeRuleOptions(zones['r1-low'])[0]).toEqual({ limit5to10: 3, limitBeyond10: 2 });
+    expect(shadeRuleOptions(zones['r1-low'], true)[0]).toEqual({
+      limit5to10: 2,
+      limitBeyond10: 1.5,
+    });
+  });
+
+  it('住居系: (一) 4h/2.5h、北海道は 3h/2h。商業系は選択肢なし', async () => {
+    const { shadeRuleOptions, JP_ZONES: zones } = await import('./zoning');
+    expect(shadeRuleOptions(zones['r1'])[0]).toEqual({ limit5to10: 4, limitBeyond10: 2.5 });
+    expect(shadeRuleOptions(zones['r1'], true)[0]).toEqual({ limit5to10: 3, limitBeyond10: 2 });
+    expect(shadeRuleOptions(zones['commercial'])).toEqual([]);
   });
 });
 

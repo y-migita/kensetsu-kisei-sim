@@ -38,6 +38,8 @@ export interface JpParams {
   shadeRuleIndex: number;
   /** 日影の測定面高さ [m] */
   shadeMeasureHeight: number;
+  /** 北海道の区域内か (日影規制: 9〜15時・緩和された許容時間) */
+  hokkaido: boolean;
 }
 
 export function zoneOf(p: JpParams): JpZone {

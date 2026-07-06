@@ -105,4 +105,16 @@ describe('simulateShade', () => {
     expect(r2.maxHours5to10).toBeGreaterThanOrEqual(result.maxHours5to10 - 1e-6);
     expect(r2.maxHoursBeyond10).toBeGreaterThanOrEqual(result.maxHoursBeyond10 - 1e-6);
   });
+
+  it('北海道 (9〜15時) は検定時間帯が短く、最大日影時間は 6h 以下かつ全国帯以下', () => {
+    const hk = simulateShade(site, building, 4, 43.06, {
+      timeStepMinutes: 10,
+      resolution: 1,
+      timeRange: [9, 15],
+    });
+    expect(hk.timeRange).toEqual([9, 15]);
+    expect(hk.maxHours5to10).toBeLessThanOrEqual(6);
+    const full = simulateShade(site, building, 4, 43.06, { timeStepMinutes: 10, resolution: 1 });
+    expect(hk.maxHours5to10).toBeLessThanOrEqual(full.maxHours5to10 + 1e-6);
+  });
 });

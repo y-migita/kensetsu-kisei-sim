@@ -248,18 +248,30 @@ export interface ShadeRule {
  * 別表第4の号区分ごとの許容時間。
  * 低層系・中高層系: (一) 3h/2h, (二) 4h/2.5h, (三) 5h/3h
  * 住居・準住居・近商・準工: (一) 4h/2.5h, (二) 5h/3h
+ * 北海道の区域内は括弧書きの緩和値 (例: 3h/2h → 2h/1.5h)。
  */
-export function shadeRuleOptions(zone: JpZone): ShadeRule[] {
+export function shadeRuleOptions(zone: JpZone, hokkaido = false): ShadeRule[] {
   if (!zone.shadeApplicable) return [];
   if (zone.category === 'low-rise' || zone.category === 'mid-rise') {
-    return [
-      { limit5to10: 3, limitBeyond10: 2 },
-      { limit5to10: 4, limitBeyond10: 2.5 },
-      { limit5to10: 5, limitBeyond10: 3 },
-    ];
+    return hokkaido
+      ? [
+          { limit5to10: 2, limitBeyond10: 1.5 },
+          { limit5to10: 3, limitBeyond10: 2 },
+          { limit5to10: 4, limitBeyond10: 2.5 },
+        ]
+      : [
+          { limit5to10: 3, limitBeyond10: 2 },
+          { limit5to10: 4, limitBeyond10: 2.5 },
+          { limit5to10: 5, limitBeyond10: 3 },
+        ];
   }
-  return [
-    { limit5to10: 4, limitBeyond10: 2.5 },
-    { limit5to10: 5, limitBeyond10: 3 },
-  ];
+  return hokkaido
+    ? [
+        { limit5to10: 3, limitBeyond10: 2 },
+        { limit5to10: 4, limitBeyond10: 2.5 },
+      ]
+    : [
+        { limit5to10: 4, limitBeyond10: 2.5 },
+        { limit5to10: 5, limitBeyond10: 3 },
+      ];
 }

@@ -65,6 +65,7 @@ export const useAppStore = create<AppState>((set) => ({
     shadeDesignated: true,
     shadeRuleIndex: 1,
     shadeMeasureHeight: 4,
+    hokkaido: false,
   },
   uk: {
     houseType: 'semi-detached',

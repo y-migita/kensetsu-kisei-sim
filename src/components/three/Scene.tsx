@@ -44,7 +44,7 @@ export function Scene({ results }: { results: Results }) {
   const violating = activeResults.some((r) => r.status === 'fail');
 
   const zone = zoneOf(jp);
-  const rules = shadeRuleOptions(zone);
+  const rules = shadeRuleOptions(zone, jp.hokkaido);
   const shadeRule = rules[Math.min(jp.shadeRuleIndex, Math.max(rules.length - 1, 0))];
 
   return (

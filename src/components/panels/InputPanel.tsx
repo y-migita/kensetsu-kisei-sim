@@ -27,7 +27,7 @@ function JpSection() {
   const jp = useAppStore((s) => s.jp);
   const setJp = useAppStore((s) => s.setJp);
   const zone = zoneOf(jp);
-  const rules = shadeRuleOptions(zone);
+  const rules = shadeRuleOptions(zone, jp.hokkaido);
 
   const onZoneChange = (id: JpZoneId) => {
     const z = JP_ZONES[id];
@@ -103,6 +103,11 @@ function JpSection() {
             label="対象区域の指定あり (条例)"
             checked={jp.shadeDesignated}
             onChange={(v) => setJp({ shadeDesignated: v })}
+          />
+          <ToggleField
+            label="北海道の区域 (9〜15時・緩和値)"
+            checked={jp.hokkaido}
+            onChange={(v) => setJp({ hokkaido: v })}
           />
           {jp.shadeDesignated && (
             <>

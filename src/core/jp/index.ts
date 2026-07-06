@@ -78,7 +78,7 @@ export function checkShade(
       detail: '日影シミュレーションを実行中',
     };
   }
-  const rules = shadeRuleOptions(zone);
+  const rules = shadeRuleOptions(zone, p.hokkaido);
   const rule = rules[Math.min(p.shadeRuleIndex, rules.length - 1)];
   const comp = shadeCompliance(sim, rule);
   const ok = comp.ok5to10 && comp.okBeyond10;
@@ -92,7 +92,7 @@ export function checkShade(
     actual: `5-10m帯 ${fmt(sim.maxHours5to10, 1)}h / 10m超 ${fmt(sim.maxHoursBeyond10, 1)}h`,
     limit: `${fmt(rule.limit5to10, 1)}h / ${fmt(rule.limitBeyond10, 1)}h`,
     detail:
-      `冬至日 真太陽時 8〜16時、測定面 GL+${p.shadeMeasureHeight}m、緯度 ${fmt(site.latitude, 2)}°。` +
+      `冬至日 真太陽時 ${p.hokkaido ? '9〜15時 (北海道)' : '8〜16時'}、測定面 GL+${p.shadeMeasureHeight}m、緯度 ${fmt(site.latitude, 2)}°。` +
       `道路緩和 (施行令135条の12) 適用済み`,
     margin: worstMargin,
   };
