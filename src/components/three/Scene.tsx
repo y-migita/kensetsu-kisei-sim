@@ -51,15 +51,15 @@ export function Scene({ results }: { results: Results }) {
     <>
       <color attach="background" args={['#0b1220']} />
       <fog attach="fog" args={['#0b1220', 90, 260]} />
-      <ambientLight intensity={0.55} />
-      <hemisphereLight args={['#b8c8e0', '#0f1722', 0.5]} />
+      <ambientLight intensity={display.showSunShadow ? 0.28 : 0.55} />
+      <hemisphereLight args={['#b8c8e0', '#0f1722', display.showSunShadow ? 0.2 : 0.5]} />
       {display.showSunShadow ? (
         <SunLight latitude={site.latitude} time={display.sunTime} />
       ) : (
         <directionalLight position={[30, 45, 20]} intensity={1.1} castShadow shadow-mapSize={[1024, 1024]} shadow-camera-left={-40} shadow-camera-right={40} shadow-camera-top={40} shadow-camera-bottom={-40} />
       )}
 
-      <SiteAndRoad site={site} />
+      <SiteAndRoad site={site} sunMode={display.showSunShadow} />
       <BuildingMass
         building={building}
         geometry={geometry}

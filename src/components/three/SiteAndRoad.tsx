@@ -12,10 +12,13 @@ const northArrowShape = new THREE.Shape([
   new THREE.Vector2(0.6, -0.6),
 ]);
 
-/** 敷地・前面道路・境界線・方位・寸法ラベル */
-export function SiteAndRoad({ site }: { site: Site }) {
+/** 敷地・前面道路・境界線・方位・寸法ラベル。sunMode では影が読めるよう明色化 */
+export function SiteAndRoad({ site, sunMode }: { site: Site; sunMode: boolean }) {
   const hw = site.width / 2;
   const hd = site.depth / 2;
+  const colors = sunMode
+    ? { ground: '#55647a', site: '#67788f', road: '#4b5567' }
+    : { ground: '#131c28', site: '#1e2c3f', road: '#28303c' };
 
   const boundaryPoints = useMemo(
     () =>
@@ -43,13 +46,13 @@ export function SiteAndRoad({ site }: { site: Site }) {
       {/* 地盤 */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.04, 0]} receiveShadow>
         <planeGeometry args={[400, 400]} />
-        <meshStandardMaterial color="#131c28" />
+        <meshStandardMaterial color={colors.ground} />
       </mesh>
 
       {/* 敷地 */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
         <planeGeometry args={[site.width, site.depth]} />
-        <meshStandardMaterial color="#1e2c3f" />
+        <meshStandardMaterial color={colors.site} />
       </mesh>
       <Line points={boundaryPoints} color="#94a3b8" lineWidth={1.5} dashed dashSize={0.5} gapSize={0.3} />
 
@@ -60,7 +63,7 @@ export function SiteAndRoad({ site }: { site: Site }) {
         receiveShadow
       >
         <planeGeometry args={[site.width + 40, site.roadWidth]} />
-        <meshStandardMaterial color="#28303c" />
+        <meshStandardMaterial color={colors.road} />
       </mesh>
       <Line points={centerlinePoints} color="#8b95a5" lineWidth={1} dashed dashSize={1.5} gapSize={1.2} />
 
