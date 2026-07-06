@@ -2,7 +2,38 @@ import { InputPanel } from './components/panels/InputPanel';
 import { ResultsPanel } from './components/panels/ResultsPanel';
 import { Viewport } from './components/Viewport';
 import { useResults } from './hooks/useResults';
+import { PRESETS } from './presets';
 import { useAppStore, type CountryMode } from './store';
+
+function PresetSelect() {
+  const setSite = useAppStore((s) => s.setSite);
+  const setBuilding = useAppStore((s) => s.setBuilding);
+  const setJp = useAppStore((s) => s.setJp);
+  const setUk = useAppStore((s) => s.setUk);
+  return (
+    <select
+      className="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-sky-500"
+      value=""
+      onChange={(e) => {
+        const p = PRESETS.find((x) => x.id === e.target.value);
+        if (!p) return;
+        setSite(p.site);
+        setBuilding(p.building);
+        setJp(p.jp);
+        setUk(p.uk);
+      }}
+    >
+      <option value="" disabled>
+        プリセット読込…
+      </option>
+      {PRESETS.map((p) => (
+        <option key={p.id} value={p.id}>
+          {p.name}
+        </option>
+      ))}
+    </select>
+  );
+}
 
 function CountryToggle() {
   const country = useAppStore((s) => s.display.country);
@@ -42,6 +73,7 @@ export default function App() {
           </p>
         </div>
         <div className="ml-auto flex items-center gap-3">
+          <PresetSelect />
           <CountryToggle />
           <a
             href="https://github.com/y-migita/kensetsu-kisei-sim"
