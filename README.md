@@ -1,32 +1,94 @@
-# React + TypeScript + Vite
+# 建設規制シミュレーター / JP–UK Building Regulation Simulator
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+**日本 (建築基準法) と英国 (Planning / Permitted Development) の建築形態規制を、パラメトリックな建物モデルに対して 3D でインタラクティブに検証できる Web アプリケーション。**
 
-Currently, two official plugins are available:
+🔗 **Live demo: https://y-migita.github.io/kensetsu-kisei-sim/**
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+敷地・建物・用途地域などの条件をスライダーで変更すると、建物ボリュームと規制面 (斜線制限・BRE 日照基準面など) がリアルタイムに再構築され、各規制の適合判定が法的根拠つきで表示されます。日本の「一義的な集団規定」と英国の「裁量型 (discretionary) の計画審査」という制度思想の違いを、同一の建物モデルで比較検討できます。
 
-## React Compiler
+> ⚠️ **免責**: 本ツールは単純化した検討モデル (矩形敷地・直方体建物・南側接道・真北整列) による参考値を示すものであり、建築確認申請・計画許可 (planning permission) の判断に代わるものではありません。実務では特定行政庁・地方計画庁 (LPA) への確認と有資格者による検討が必要です。
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 実装している規制
 
-## Expanding the Oxlint configuration
+### 🇯🇵 日本 — 建築基準法 集団規定
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+| 規制 | 根拠 | 実装内容 |
+|---|---|---|
+| 建蔽率 | 53条 | 用途地域ごとの指定値、角地 +10%、防火地域×耐火 +10% (準防火×準耐火含む・2019年改正)、80%区域×防火×耐火の適用除外 (6項1号) |
+| 容積率 | 52条 | 指定容積率と前面道路幅員による低減 (幅員 <12m: 住居系 ×0.4 / その他 ×0.6) の厳しい方 |
+| 絶対高さ制限 | 55条 | 低層住専・田園住居の 10m / 12m |
+| 道路斜線 | 56条1項1号・別表第3 | 容積率限度に応じた適用距離、勾配 1.25/1.5、セットバック緩和 (2項)、幅員 12m 以上の勾配切替 (3項) |
+| 隣地斜線 | 56条1項2号 | 20m+1.25 / 31m+2.5、立上り超過部分の後退緩和 |
+| 北側斜線 | 56条1項3号 | 低層 5m+1.25 / 中高層 10m+1.25 (日影規制指定区域では適用除外) |
+| 日影規制 | 56条の2・別表第4 | 冬至日の真太陽時 8〜16時を数値積分した等時間日影シミュレーション。対象建物判定 (軒高 7m 超/3階以上・高さ 10m 超)、測定面 (GL+1.5m/4m/6.5m)、5m・10m ライン、道路緩和 (施行令135条の12) |
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+### 🇬🇧 英国 (イングランド) — Planning / Building Regulations 関連
+
+| 検定 | 根拠 | 実装内容 |
+|---|---|---|
+| 25° テスト | BRE 209 (2022) | 道路向かいの既存窓中心からの仰角 25° による昼光初期検討 |
+| 45° ルール | LPA 設計指針 | 隣地窓中心からの立面 45° 線 (東西境界、簡略化した立面テスト) |
+| PD: 後方増築の奥行 | GPDO 2015 Sch.2 Pt.1 Class A.1(f) | 戸建 4m (事前届出で 8m) / その他 3m (6m)、指定地の拡大不可 |
+| PD: 増築部の高さ | 同 A.1 | 単層 4m、2 層以上は奥行 3m 以内かつ後方境界から 7m 以上 |
+| PD: 境界 2m 以内の軒高 | 同 A.1(g) | 側面境界 2m 以内は軒高 3m 以下 |
+| PD: 敷地被覆率 | 同 A.1(e) | curtilage (オリジナル住宅除く) の 50% 以下 |
+| 住戸面積 (NDSS) | Technical housing standards 2015 | 住戸あたり GIA の概算検定 (最小 37m²) |
+| 計画許可 (情報) | TCPA 1990 s.57 | 英国には全国一律の形態規制がなく裁量審査となる旨の制度差表示 |
+
+## 主な機能
+
+- **インタラクティブな建物生成** — 幅・奥行・後退距離・階数・階高・パラペットをスライダーで操作すると 3D ボリュームが即時再構築
+- **規制面の 3D 可視化** — 道路/隣地/北側斜線・絶対高さ・BRE 25°/45° を半透明の制限面として重畳表示 (表示は個別トグル)
+- **等時間日影図** — 測定面上のヒートマップ (許容時間超過セルは赤)、5m/10m ラインつき
+- **冬至太陽プレビュー** — 真太陽時スライダーで実影を確認 (緯度は札幌〜ロンドンのプリセット)
+- **適合判定パネル** — 各規制の計画値/限度値・余裕率バー・法的根拠・緩和の適用状況を表示。不適合時は建物が赤表示
+- **日英ワンタッチ切替** — 同一モデルに対する両国の規制体系を比較
+
+## 技術構成
+
+- [Vite](https://vite.dev/) + React 19 + TypeScript (strict)
+- [three.js](https://threejs.org/) + [@react-three/fiber](https://github.com/pmndrs/react-three-fiber) + [@react-three/drei](https://github.com/pmndrs/drei)
+- [Tailwind CSS v4](https://tailwindcss.com/)
+- [zustand](https://github.com/pmndrs/zustand) (状態管理)
+- [Vitest](https://vitest.dev/) — 規制エンジンのユニットテスト 76 件 (手計算による法規値と照合)
+
+```
+src/
+├── core/            # 純関数の規制検定エンジン (UI 非依存・全テスト対象)
+│   ├── types.ts     # 座標系: +X=東, -Z=真北, +Y=上 / 南側接道
+│   ├── geometry.ts  # 建物幾何の導出
+│   ├── sun.ts       # 太陽位置 (真太陽時・赤緯)
+│   ├── jp/          # 建築基準法: zoning / checks / shade (日影数値積分)
+│   └── uk/          # BRE 209 / GPDO 2015 / NDSS
+├── components/
+│   ├── three/       # R3F シーン (敷地・建物・規制面・日影ヒートマップ)
+│   └── panels/      # 入力・判定結果パネル
+├── hooks/useResults.ts  # 検定の一括導出 (日影は useDeferredValue で非同期化)
+└── store.ts         # zustand ストア
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## 開発
+
+```bash
+npm install
+npm run dev        # 開発サーバー
+npm test           # ユニットテスト (vitest)
+npm run lint       # oxlint
+npm run typecheck  # tsc -b
+npm run build      # 型チェック + プロダクションビルド
+```
+
+main ブランチへの push で CI (lint / test / build) と GitHub Pages への自動デプロイが走ります。
+
+## モデルの前提と限界
+
+- 敷地は矩形・平坦で、南側の一辺のみが道路に接する (角地は建蔽率の割増のみ考慮)
+- 建物は単一の直方体 (セットバックした上層部・複数棟は未対応)
+- 敷地は真北に整列 (北側斜線・日影の真北方向 = 画面奥)
+- 日影規制は冬至日・真太陽時ベースの数値積分 (グリッド 0.5m / 6分刻み) による近似
+- 天空率 (56条の7) による斜線制限の代替検討、高度地区、地区計画、外壁後退 (54条) は未実装
+- 英国の 45° ルールは立面のみの簡略版。BRE の VSC/APSH・Rights of Light は対象外
+
+## License
+
+MIT
