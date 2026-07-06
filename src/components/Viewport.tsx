@@ -1,4 +1,5 @@
 import { Canvas } from '@react-three/fiber';
+import { useState } from 'react';
 import { zoneOf } from '../core/jp';
 import type { Results } from '../hooks/useResults';
 import { useAppStore, type DisplayState } from '../store';
@@ -121,11 +122,25 @@ function SunControl() {
 }
 
 export function Viewport({ results }: { results: Results }) {
+  const [ready, setReady] = useState(false);
   return (
     <div className="relative h-full min-w-0">
-      <Canvas shadows camera={{ position: [26, 22, 38], fov: 40 }} dpr={[1, 2]}>
+      <Canvas
+        shadows
+        camera={{ position: [26, 22, 38], fov: 40 }}
+        dpr={[1, 2]}
+        onCreated={() => setReady(true)}
+      >
         <Scene results={results} />
       </Canvas>
+      {!ready && (
+        <div className="absolute inset-0 flex items-center justify-center bg-[#0b1220]">
+          <div className="text-center">
+            <div className="mx-auto mb-3 w-8 h-8 rounded-full border-2 border-slate-700 border-t-sky-400 animate-spin" />
+            <p className="text-xs text-slate-500">3Dシーンを初期化中…</p>
+          </div>
+        </div>
+      )}
       <OverlayChips />
       <SunControl />
     </div>
