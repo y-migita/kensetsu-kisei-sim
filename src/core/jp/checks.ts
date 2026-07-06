@@ -167,6 +167,7 @@ export function checkAbsoluteHeight(site: Site, b: Building, p: JpParams): Check
 /** 別表第3による適用距離 [m]。容積率の限度 (前面道路低減後) で決まる。 */
 export function roadSlantApplicableDistance(zone: JpZone, farLimitPct: number): number {
   if (zone.category === 'commercial') {
+    // (二) 近隣商業・商業
     if (farLimitPct <= 400) return 20;
     if (farLimitPct <= 600) return 25;
     if (farLimitPct <= 800) return 30;
@@ -175,7 +176,13 @@ export function roadSlantApplicableDistance(zone: JpZone, farLimitPct: number): 
     if (farLimitPct <= 1200) return 45;
     return 50;
   }
-  // 住居系 (一) と 工業系 (三) は同じ距離区分
+  if (zone.category === 'industrial') {
+    // (三) 準工業・工業・工業専用は 3 区分のみ (300% 超は一律 30m)
+    if (farLimitPct <= 200) return 20;
+    if (farLimitPct <= 300) return 25;
+    return 30;
+  }
+  // (一) 住居系
   if (farLimitPct <= 200) return 20;
   if (farLimitPct <= 300) return 25;
   if (farLimitPct <= 400) return 30;

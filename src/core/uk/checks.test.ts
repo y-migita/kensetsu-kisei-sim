@@ -154,8 +154,23 @@ describe('PD Class A: 高さ・軒高', () => {
 
   it('境界から 2m 超なら軒高制限なし', () => {
     const away: Building = { ...building, width: 5, setbackWest: 2.5 };
-    // 東側余り = 10 - 2.5 - 5 = 2.5m
+    // 東側余り = 10 - 2.5 - 5 = 2.5m、北側余り = 5m
     expect(checkPdEaves(site, away, params).status).toBe('pass');
+  });
+
+  it('後方 (北) 境界 2m 以内でも軒高制限がかかる (A.1(i) は任意の境界)', () => {
+    const nearRear: Building = { ...building, setbackSouth: 7 };
+    // south = 3, north = -9 → 後方境界まで 1m。東西は 2m 離れている
+    expect(checkPdEaves(site, nearRear, params).status).toBe('fail');
+  });
+
+  it('指定地では 2 層以上の後方増築は寸法に関わらず PD 対象外 (A.2(c))', () => {
+    const shallowTwoStorey: Building = { ...building, depth: 11, setbackSouth: 2 };
+    // 指定地でなければ pass する条件 (奥行 1m・後方境界 7m)
+    expect(checkPdHeight(site, shallowTwoStorey, params).status).toBe('pass');
+    const r = checkPdHeight(site, shallowTwoStorey, { ...params, isDesignatedLand: true });
+    expect(r.status).toBe('fail');
+    expect(r.legalBasis).toContain('A.2(c)');
   });
 });
 

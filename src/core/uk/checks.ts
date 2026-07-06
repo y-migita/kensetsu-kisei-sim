@@ -213,20 +213,40 @@ export function checkPdHeight(site: Site, b: Building, p: UkParams): CheckResult
     id: 'uk-pd-height',
     name: 'PD: 増築部の高さ',
     nameEn: 'PD extension height',
-    legalBasis: 'GPDO 2015 Sch.2 Pt.1 Class A.1(g)-(i)',
   };
   if (ext <= 0) {
-    return { ...base, status: 'na', actual: '増築なし', limit: '—', detail: '増築部分なし' };
+    return {
+      ...base,
+      legalBasis: 'GPDO 2015 Sch.2 Pt.1 A.1(f)/(h)',
+      status: 'na',
+      actual: '増築なし',
+      limit: '—',
+      detail: '増築部分なし',
+    };
   }
   if (b.floors === 1) {
     const ok = g.height <= 4 + 1e-9;
     return {
       ...base,
+      legalBasis: 'GPDO 2015 Sch.2 Pt.1 A.1(f)',
       status: ok ? 'pass' : 'fail',
       actual: `${fmt(g.height, 2)}m`,
       limit: '4m',
       detail: '単層の後方増築は最高高さ 4m まで',
       margin: margin(g.height, 4),
+    };
+  }
+  // 指定地 (article 2(3) land) では 1 層を超える後方増築は要件に関わらず PD 対象外
+  if (p.isDesignatedLand) {
+    return {
+      ...base,
+      legalBasis: 'GPDO 2015 Sch.2 Pt.1 A.2(c)',
+      status: 'fail',
+      actual: `${b.floors}層の増築`,
+      limit: '指定地では単層のみ',
+      detail:
+        '保全地区・国立公園等の指定地では、1 層を超える後方増築は寸法要件を満たしても許可不要開発の対象外となり計画許可が必要',
+      margin: -1,
     };
   }
   // 2 層以上の後方増築: 奥行 3m 以内かつ後方境界から 7m 以上離す (A.1(h))
@@ -235,6 +255,7 @@ export function checkPdHeight(site: Site, b: Building, p: UkParams): CheckResult
   const okRear = rearDist >= 7 - 1e-9;
   return {
     ...base,
+    legalBasis: 'GPDO 2015 Sch.2 Pt.1 A.1(h)',
     status: okDepth && okRear ? 'pass' : 'fail',
     actual: `奥行 ${fmt(ext, 2)}m・後方境界まで ${fmt(rearDist, 2)}m`,
     limit: '奥行 3m 以内かつ後方境界から 7m 以上',
@@ -250,19 +271,20 @@ export function checkPdEaves(site: Site, b: Building, p: UkParams): CheckResult 
     id: 'uk-pd-eaves',
     name: 'PD: 境界 2m 以内の軒高',
     nameEn: 'PD eaves near boundary',
-    legalBasis: 'GPDO 2015 Sch.2 Pt.1 Class A.1(g)',
+    legalBasis: 'GPDO 2015 Sch.2 Pt.1 A.1(i)',
   };
   if (ext <= 0) {
     return { ...base, status: 'na', actual: '増築なし', limit: '—', detail: '増築部分なし' };
   }
-  const nearBoundary = b.setbackWest < 2 || g.setbackEast < 2;
-  if (!nearBoundary) {
+  // A.1(i) の「境界」は curtilage の任意の境界 — 側面 (東西) と後方 (北) を判定
+  const minBoundaryDist = Math.min(b.setbackWest, g.setbackEast, g.setbackNorth);
+  if (minBoundaryDist >= 2) {
     return {
       ...base,
       status: 'pass',
-      actual: `側面境界まで ${fmt(Math.min(b.setbackWest, g.setbackEast), 2)}m`,
+      actual: `最寄り境界まで ${fmt(minBoundaryDist, 2)}m`,
       limit: '境界 2m 以内なら軒高 3m',
-      detail: '側面境界から 2m 超離れているため軒高制限は適用されない',
+      detail: '敷地境界から 2m 超離れているため軒高制限は適用されない',
       margin: 1,
     };
   }
@@ -272,7 +294,7 @@ export function checkPdEaves(site: Site, b: Building, p: UkParams): CheckResult 
     status: ok ? 'pass' : 'fail',
     actual: `軒高 ${fmt(g.eavesHeight, 2)}m`,
     limit: '3m',
-    detail: `増築部が側面境界から 2m 以内にあるため軒高 3m 以下とする必要がある`,
+    detail: `増築部が敷地境界から 2m 以内 (最寄り ${fmt(minBoundaryDist, 2)}m) にあるため軒高 3m 以下とする必要がある`,
     margin: margin(g.eavesHeight, 3),
   };
 }
@@ -283,7 +305,7 @@ export function checkPdCoverage(site: Site, b: Building, p: UkParams): CheckResu
     id: 'uk-pd-coverage',
     name: 'PD: 敷地被覆率',
     nameEn: 'PD curtilage coverage',
-    legalBasis: 'GPDO 2015 Sch.2 Pt.1 Class A.1(e)',
+    legalBasis: 'GPDO 2015 Sch.2 Pt.1 A.1(b)',
   };
   if (ext <= 0) {
     return { ...base, status: 'na', actual: '増築なし', limit: '50%', detail: '増築部分なし' };
@@ -336,8 +358,8 @@ export function checkSpaceStandard(site: Site, b: Building, p: UkParams): CheckR
     actual: `${fmt(giaPerDwelling, 1)}m²/戸 (${p.dwellingCount}戸)`,
     limit: `${NDSS_MIN_GIA}m²/戸 以上`,
     detail:
-      '最小住戸タイプ (1b1p) の下限との概算比較。実際の要求値は住戸タイプ・寝室数・階数で異なり、' +
-      'ローカルプランで採用された場合に適用される',
+      '最小住戸タイプ (1b1p) の下限との概算比較。外形床面積による概算のため実際の GIA (内法) より大きめに出る点に注意。' +
+      '実際の要求値は住戸タイプ・寝室数・階数で異なり、ローカルプランで採用された場合に適用される',
     margin: ok ? (giaPerDwelling - NDSS_MIN_GIA) / giaPerDwelling : margin(NDSS_MIN_GIA, giaPerDwelling),
   };
 }

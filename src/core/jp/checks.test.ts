@@ -172,6 +172,12 @@ describe('道路斜線 (56条・別表第3)', () => {
     expect(roadSlantApplicableDistance(JP_ZONES['industrial'], 300)).toBe(25);
   });
 
+  it('適用距離: 工業系 (別表第3 (三)) は 300% 超で一律 30m、住居系は 400% 超で 35m', () => {
+    expect(roadSlantApplicableDistance(JP_ZONES['quasi-ind'], 500)).toBe(30);
+    expect(roadSlantApplicableDistance(JP_ZONES['industrial'], 400)).toBe(30);
+    expect(roadSlantApplicableDistance(JP_ZONES['r1'], 500)).toBe(35);
+  });
+
   it('後退なし: 許容高さ = 1.25 × 道路幅員 (住居系)', () => {
     const b0 = { ...building, setbackSouth: 0 };
     const spec = roadSlantSpec(site, b0, baseParams);
