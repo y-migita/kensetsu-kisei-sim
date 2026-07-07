@@ -15,6 +15,15 @@ import { shadowOffset, sunPosition, type SunPosition } from '../sun';
 import type { Building, Site } from '../types';
 import type { ShadeRule } from './zoning';
 
+/** アプリ本番の日影シミュレーション設定 (useResults と optimize で共有し判定を一致させる) */
+export const SHADE_SIM_RESOLUTION = 0.5;
+export const SHADE_SIM_TIME_STEP_MINUTES = 6;
+
+/** 検定時間帯 [真太陽時]: 北海道は9〜15時、その他は8〜16時 (別表第4) */
+export function shadeTimeRange(hokkaido: boolean): [number, number] {
+  return hokkaido ? [9, 15] : [8, 16];
+}
+
 export interface ShadeGrid {
   /** グリッド原点 (最小 x, 最小 z) */
   originX: number;

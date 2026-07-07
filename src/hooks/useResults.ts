@@ -1,6 +1,14 @@
 import { useDeferredValue, useMemo } from 'react';
 import { deriveGeometry, validatePlacement } from '../core/geometry';
-import { needsShadeSim, runJpChecks, simulateShade, type ShadeSimResult } from '../core/jp';
+import {
+  needsShadeSim,
+  runJpChecks,
+  SHADE_SIM_RESOLUTION,
+  SHADE_SIM_TIME_STEP_MINUTES,
+  shadeTimeRange,
+  simulateShade,
+  type ShadeSimResult,
+} from '../core/jp';
 import { runUkChecks } from '../core/uk';
 import { useAppStore } from '../store';
 
@@ -24,9 +32,9 @@ export function useResults() {
   const shadeSim = useMemo<ShadeSimResult | null>(() => {
     if (!shadeNeeded) return null;
     return simulateShade(dSite, dBuilding, dMeasureHeight, dSite.latitude, {
-      resolution: 0.5,
-      timeStepMinutes: 6,
-      timeRange: hokkaido ? [9, 15] : [8, 16],
+      resolution: SHADE_SIM_RESOLUTION,
+      timeStepMinutes: SHADE_SIM_TIME_STEP_MINUTES,
+      timeRange: shadeTimeRange(hokkaido),
     });
   }, [dSite, dBuilding, dMeasureHeight, shadeNeeded, hokkaido]);
 
