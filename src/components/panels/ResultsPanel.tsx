@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { fmt } from '../../core/geometry';
+import { maximizeFar } from '../../core/jp';
 import type { CheckResult, CheckStatus } from '../../core/types';
 import type { Results } from '../../hooks/useResults';
 import { useAppStore } from '../../store';
@@ -59,15 +61,46 @@ function CheckRow({ result }: { result: CheckResult }) {
   );
 }
 
+type OptimizationMessage =
+  | { type: 'success'; farPct: number; notes: string[] }
+  | { type: 'error'; text: string }
+  | null;
+
 export function ResultsPanel({ results }: { results: Results }) {
   const country = useAppStore((s) => s.display.country);
   const site = useAppStore((s) => s.site);
+  const [busy, setBusy] = useState(false);
+  const [optimizationMessage, setOptimizationMessage] = useState<OptimizationMessage>(null);
   const { geometry: g, jpResults, ukResults, placementErrors } = results;
   const active = country === 'jp' ? jpResults : ukResults;
 
   const failCount = active.filter((r) => r.status === 'fail').length;
   const passCount = active.filter((r) => r.status === 'pass').length;
   const siteArea = site.width * site.depth;
+
+  const handleMaximizeFar = () => {
+    setBusy(true);
+    setTimeout(() => {
+      try {
+        const { site: currentSite, jp, building, setBuilding } = useAppStore.getState();
+        const result = maximizeFar(currentSite, jp, building);
+        if (result.feasible && result.building) {
+          setBuilding({
+            width: result.building.width,
+            depth: result.building.depth,
+            setbackSouth: result.building.setbackSouth,
+            setbackWest: result.building.setbackWest,
+            floors: result.building.floors,
+          });
+          setOptimizationMessage({ type: 'success', farPct: result.farPct, notes: result.notes });
+        } else {
+          setOptimizationMessage({ type: 'error', text: '適合解が見つかりません' });
+        }
+      } finally {
+        setBusy(false);
+      }
+    }, 30);
+  };
 
   return (
     <div className="h-full flex flex-col">
@@ -81,6 +114,29 @@ export function ResultsPanel({ results }: { results: Results }) {
           <Stat label="建蔽率 (計画)" value={`${fmt((g.footprintArea / siteArea) * 100, 1)} %`} />
           <Stat label="容積率 (計画)" value={`${fmt((g.totalFloorArea / siteArea) * 100, 1)} %`} />
         </div>
+        {country === 'jp' && (
+          <div className="mt-3 border-t border-slate-800 pt-3">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={handleMaximizeFar}
+              className="rounded-lg bg-sky-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-sky-500 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+            >
+              {busy ? '最適化中…' : '容積率を最大化'}
+            </button>
+            {optimizationMessage?.type === 'success' && (
+              <div className="mt-2 space-y-0.5 text-[11px] text-slate-400">
+                <p className="tabular-nums">達成容積率 {fmt(optimizationMessage.farPct, 1)}%</p>
+                {optimizationMessage.notes.map((note) => (
+                  <p key={note}>{note}</p>
+                ))}
+              </div>
+            )}
+            {optimizationMessage?.type === 'error' && (
+              <p className="mt-2 text-[11px] text-red-400">{optimizationMessage.text}</p>
+            )}
+          </div>
+        )}
       </div>
 
       {placementErrors.length > 0 && (
