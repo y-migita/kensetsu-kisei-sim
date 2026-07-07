@@ -19,6 +19,7 @@ import { shadeCompliance, simulateShade, type ShadeSimResult } from './shade';
 import { shadeRuleOptions } from './zoning';
 
 export * from './checks';
+export * from './optimize';
 export * from './shade';
 export * from './zoning';
 
